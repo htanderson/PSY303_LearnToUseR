@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1574195111536.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1832170112",
+    "id" : "703E65C7",
+    "lastKnownWriteTime" : 1574136385,
+    "last_content_update" : 1574136385,
+    "path" : "~/UOregon/Teaching/PSY303/3_Fall2019/R_303Fall2019/Results_Paper2_3_Graph.R",
+    "project_path" : "Results_Paper2_3_Graph.R",
+    "properties" : {
+        "cursorPosition" : "72,36",
+        "scrollLine" : "59"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 4,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

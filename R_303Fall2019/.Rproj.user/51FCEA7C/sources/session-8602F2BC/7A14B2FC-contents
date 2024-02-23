@@ -1,0 +1,360 @@
+---
+title: "Implicit Bias Graphs"
+author: "Heather Anderson"
+date: "`r Sys.Date()`"
+output: html_document
+---
+First, download the "Student Analysis" from the Implicit Bias survey on Canvas. 
+In the CSV, rename columns:
+"After you did the IAT, it gave you feedback on the screen. What were your Age IAT results? (Choose the response you got)" to "IAT" 
+"How warm do you feel towards Old people?" to "warm_old"
+"How warm do you feel towardsYoung people?" to "warm_young"
+"How old are you?" to "age"
+Delete all other columns and save the CSV.
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(data.table)
+library(hablar)
+library(magrittr)
+library(dplyr)
+library(ggplot2)
+library(cowplot)
+library(RColorBrewer)
+
+knitr::opts_chunk$set(echo = TRUE)
+
+
+#### Set Options ####
+
+# for readability
+options(digits.secs = 2)
+options(digits = 6)
+options(scipen = 999)
+# set fread to always read empty
+# strings as NA
+options(fread.na.strings = c("", NA))
+# set default plot dpi to 600
+# normal default is 300
+options(save_plot.dpi = 600)
+options(ggsave.dpi = 600)
+
+
+#### Ggplot Theme ####
+
+theme_set(theme_classic() +
+            theme(
+              panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              panel.background = element_blank(),
+              axis.line.x  = element_line(colour = "black",
+                                          size=1),
+              axis.line.y  = element_line(colour = "black",
+                                          size=1),
+              axis.ticks = element_line(colour = "black", 
+                                        size=4),
+              axis.text = element_text(colour = "black", size=14),
+              axis.title = element_text(colour= "black", size=18),
+              legend.text = element_text(colour = "black",
+                                         size=18),
+              legend.title = element_text(colour = "black",
+                                          size=18),
+              plot.subtitle = element_text(hjust = 0.5, 
+                                           size = 14),
+              plot.title = element_text(hjust = 0.5, 
+                                        size = 16),
+              strip.text = element_text(colour = "black",
+                                        size=14)))
+
+# clear environment
+rm(list = ls())
+```
+
+```{r}
+
+# clear environment
+rm(list = ls())
+
+iat_data <-
+  fread("Implicit Bias Survey Survey Student Analysis Report.csv", na.strings = c("", NA))
+
+iat_data <-
+  na.omit(iat_data)
+
+iat_data[, mean(age)]
+
+# clean up levels
+# for easy graphing
+iat_data[, ":=" (IAT = factor(IAT,
+                               levels = c(
+                                 "1 Strong automatic preference for Young people compared to Old people", 
+                                 "2 Moderate automatic preference for Young people compared to Old people", 
+                                 "3 Slight automatic preference for Young people compared to Old people", 
+                                 "4 Little to no automatic preference between Young and Old people", 
+                                 "5 Slight automatic preference for Old people compared to Young people", 
+                                 "6 Moderate automatic preference for Old people compared to Young people", 
+                                 "7 Strong automatic preference for Old people compared to Young people"),
+                              labels = c(
+                                 "Strong Young", 
+                                 "Moderate Young", 
+                                 "Slight Young", 
+                                 "Little to no", 
+                                 "Slight Old", 
+                                 "Moderate Old", 
+                                 "Strong Old"),
+                              ordered = TRUE),
+                 IAT_num = substr(IAT, 1, 1)  %>% 
+                   as.character %>%
+                   as.numeric,
+                 warm_old = factor(x = warm_old, 
+                                   levels = c(
+                                       "0 Extremely cold",
+                                       "1 Very cold",
+                                       "2 Moderately cold", 
+                                       "3 Somewhat cold", 
+                                       "4 Slightly cold", 
+                                       "5 Neither warm nor cold", 
+                                       "6 Slightly warm", 
+                                       "7 Somewhat warm", 
+                                       "8 Moderately warm", 
+                                       "9 Very warm", 
+                                       "10 Extremely warm"),
+                                     labels = c(
+                                       "Extremely cold",
+                                       "Very cold",
+                                       "Moderately cold", 
+                                       "Somewhat cold", 
+                                       "Slightly cold", 
+                                       "Neither warm nor cold", 
+                                       "Slightly warm", 
+                                       "Somewhat warm", 
+                                       "Moderately warm", 
+                                       "Very warm", 
+                                       "Extremely warm"),
+                                   ordered = TRUE),
+                 warm_old_num = factor(x = warm_old, 
+                                   levels = c(
+                                       "0 Extremely cold",
+                                       "1 Very cold",
+                                       "2 Moderately cold", 
+                                       "3 Somewhat cold", 
+                                       "4 Slightly cold", 
+                                       "5 Neither warm nor cold", 
+                                       "6 Slightly warm", 
+                                       "7 Somewhat warm", 
+                                       "8 Moderately warm", 
+                                       "9 Very warm", 
+                                       "10 Extremely warm"),
+                                   labels = c(0:10),
+                                   ordered = TRUE) %>% 
+                   as.character %>%
+                   as.numeric,
+                 warm_young = factor(x = warm_young, 
+                                     levels = c(
+                                       "0 Extremely cold",
+                                       "1 Very cold",
+                                       "2 Moderately cold", 
+                                       "3 Somewhat cold", 
+                                       "4 Slightly cold", 
+                                       "5 Neither warm nor cold", 
+                                       "6 Slightly warm", 
+                                       "7 Somewhat warm", 
+                                       "8 Moderately warm", 
+                                       "9 Very warm", 
+                                       "10 Extremely warm"),
+                                     labels = c(
+                                       "Extremely cold",
+                                       "Very cold",
+                                       "Moderately cold", 
+                                       "Somewhat cold", 
+                                       "Slightly cold", 
+                                       "Neither warm nor cold", 
+                                       "Slightly warm", 
+                                       "Somewhat warm", 
+                                       "Moderately warm", 
+                                       "Very warm", 
+                                       "Extremely warm"),
+                                     ordered = TRUE),
+                 warm_young_num = factor(x = warm_young, 
+                                   levels = c(
+                                       "0 Extremely cold",
+                                       "1 Very cold",
+                                       "2 Moderately cold", 
+                                       "3 Somewhat cold", 
+                                       "4 Slightly cold", 
+                                       "5 Neither warm nor cold", 
+                                       "6 Slightly warm", 
+                                       "7 Somewhat warm", 
+                                       "8 Moderately warm", 
+                                       "9 Very warm", 
+                                       "10 Extremely warm"),
+                                   labels = c(0:10),
+                                   ordered = TRUE) %>% 
+                   as.character %>%
+                   as.numeric)]
+#### IAT Plot ####
+
+(IAT_plot <- 
+  ggplot(iat_data,
+         aes(IAT,
+             fill = IAT)) +
+  geom_bar(color = "black", show.legend = FALSE) +
+  xlab("Automatic Preference for Age Group") +
+  ylab("Number of Students")+
+  ggtitle("Age IAT",
+          subtitle = paste("N =", iat_data[, .N], "students")) +
+  scale_fill_brewer(palette = "PRGn", drop=FALSE) +
+  theme(axis.text.x=element_text(angle=45,hjust= 1, vjust=1)))
+
+save_plot("IAT_plot.png",
+          IAT_plot,
+          base_width = 8,
+          base_height = 6)
+
+#### Warmth Plots ####
+
+(old_warmth_plot <- 
+    ggplot(na.omit(iat_data),
+           aes(warm_old,
+               fill = warm_old)) +
+    geom_bar(color = "black", show.legend = FALSE) +
+    scale_x_discrete(drop=FALSE) +
+    xlab(NULL) +
+    ylab("Number of Students")+
+    ggtitle("Warmth Towards Old People",
+          subtitle = paste("N =", iat_data[, .N], "students")) +
+    scale_fill_manual(
+      values = c(
+        "Extremely cold" = "#313695",
+        "Very cold" = "#4575B4",
+        "Moderately cold" = "#74ADD1", 
+        "Somewhat cold" = "#ABD9E9", 
+        "Slightly cold" = "#E0F3F8", 
+        "Neither warm nor cold" = "#FFFFBF", 
+        "Slightly warm" = "#FEE090", 
+        "Somewhat warm" = "#FDAE61", 
+        "Moderately warm" = "#F46D43", 
+        "Very warm" = "#D73027", 
+        "Extremely warm" = "#A50026"))  +
+    theme(axis.text.x=element_blank()))
+
+save_plot("old_warmth_plot.png",
+          old_warmth_plot,
+          base_width = 8,
+          base_height = 4)
+
+(young_warmth_plot <- 
+    ggplot(na.omit(iat_data),
+           aes(warm_young,
+               fill = warm_young)) +
+    geom_bar(color = "black", show.legend = FALSE) +
+    scale_x_discrete(drop=FALSE) +
+    xlab(NULL) +
+    ylab("Number of Students")+
+    ggtitle("Warmth Towards Young People",
+          subtitle = paste("N =", iat_data[, .N], "students")) +
+    scale_fill_manual(
+      values = c(
+        "Extremely cold" = "#313695",
+        "Very cold" = "#4575B4",
+        "Moderately cold" = "#74ADD1", 
+        "Somewhat cold" = "#ABD9E9", 
+        "Slightly cold" = "#E0F3F8", 
+        "Neither warm nor cold" = "#FFFFBF", 
+        "Slightly warm" = "#FEE090", 
+        "Somewhat warm" = "#FDAE61", 
+        "Moderately warm" = "#F46D43", 
+        "Very warm" = "#D73027", 
+        "Extremely warm" = "#A50026"))  +
+    theme(axis.text.x=element_blank()))
+    # theme(axis.text.x=element_text(angle=30,hjust= 1, vjust=1)))
+
+save_plot("young_warmth_plot.png",
+          young_warmth_plot,
+          base_width = 8,
+          base_height = 4)
+
+#### Correlations ####
+
+iat_data[, cor.test(warm_old_num, IAT_num)]
+
+# 	Pearson's product-moment correlation
+# 
+# data:  warm_old_num and IAT_num
+# t = 1.661, df = 436, p-value = 0.0975
+# alternative hypothesis: true correlation is not equal to 0
+# 95 percent confidence interval:
+#  -0.0145188  0.1717083
+# sample estimates:
+#       cor 
+# 0.0792865 
+
+(iat_old_plot <-
+    ggplot(iat_data,
+           aes(warm_old_num, IAT_num)) +
+    # use jitter to see all dots
+    geom_jitter(width = .1) +
+    geom_smooth(method = "lm",
+                size = 2,
+                se = FALSE,
+                color = "firebrick2") +
+    coord_cartesian(xlim = c(0, 11),
+                    ylim = c(1, 7)) +
+    scale_x_continuous(breaks = c(0, 5, 10),
+                       labels = c("Cold", "Neutral", "Warm")) +
+    scale_y_continuous(breaks = c(1, 4, 7),
+                       labels = c("Strong
+Young", 
+                                  "Neutral", 
+                                  "Strong
+Old")) +
+    xlab("Explicit Warmth Towards Old") +
+    ylab("IAT Score"))
+
+
+save_plot("iat_old_plot.png",
+          plot = iat_old_plot, base_width = 7)
+
+
+iat_data[, cor.test(warm_young_num, IAT_num)]
+
+# 	Pearson's product-moment correlation
+# 
+# data:  warm_young_num and IAT_num
+# t = -3.025, df = 436, p-value = 0.00263
+# alternative hypothesis: true correlation is not equal to 0
+# 95 percent confidence interval:
+#  -0.2339354 -0.0503598
+# sample estimates:
+#       cor 
+# -0.143381 
+
+
+(iat_young_plot <-
+    ggplot(iat_data,
+           aes(warm_young_num, IAT_num)) +
+    # use jitter to see all dots
+    geom_jitter(width = .1) +
+    geom_smooth(method = "lm",
+                size = 2,
+                se = FALSE,
+                color = "firebrick2") +
+    coord_cartesian(xlim = c(0, 11),
+                    ylim = c(1, 7)) +
+    scale_x_continuous(breaks = c(0, 5, 10),
+                       labels = c("Cold", "Neutral", "Warm")) +
+    scale_y_continuous(breaks = c(1, 4, 7),
+                       labels = c("Strong
+Young", 
+                                  "Neutral", 
+                                  "Strong
+Old")) +
+    xlab("Explicit Warmth Towards Young") +
+    ylab("IAT Score"))
+
+
+save_plot("iat_young_plot.png",
+          plot = iat_young_plot, base_width = 7)
+
+```

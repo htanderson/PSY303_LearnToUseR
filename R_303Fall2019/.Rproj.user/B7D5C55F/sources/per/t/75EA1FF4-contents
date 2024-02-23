@@ -1,0 +1,1423 @@
+---
+title: "303_Anderson_Paper2_Stats"
+author: "Heather Anderson"
+date: "12/10/2019"
+output:
+  word_document:
+    toc: yes
+  html_document:
+    highlight: pygments
+    theme: cerulean
+    toc: yes
+    toc_float: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+babyDataFull <- 
+  read.csv(file = "ManyBabiesData.csv", 
+           na.strings = c("", NA))
+
+# re-create IDSPref variable
+babyDataFull$IDSPref <- 
+  babyDataFull$looking_time_IDS - babyDataFull$looking_time_ADS
+
+# install & load needed packages
+list.of.packages <- 
+  c("plyr", "dplyr", "car", "heplots", "ggplot2")
+new.packages <-
+  list.of.packages[!(list.of.packages %in% 
+                       installed.packages()[, "Package"])]
+if (length(new.packages)) {
+  install.packages(new.packages, 
+                   repos = "http://cran.us.r-project.org")}
+lapply(list.of.packages, library, character.only = TRUE)
+
+# make ggplot look nice
+theme_set(
+  # use theme_classic
+  # clean, APA-style
+  theme_classic() +
+    # additionally, center the title
+    theme(plot.title =
+            element_text(hjust = 0.5)))
+
+```
+
+# 1 CATEGORICAL & 1 CONTINUOUS PREDICTOR
+
+## Child Gender & Age
+
+```{r Child Gender & Age, include=TRUE, echo = FALSE}
+
+babyData <- babyDataFull
+
+babyData <- 
+  babyData[!is.na(babyData$gender) & 
+             !is.na(babyData$age_days), ]
+
+allDesc <- 
+   # take babyData
+   babyData %>% 
+   # and create columns for the Mean and SD
+   summarise(
+     # of IDSPref
+     "Mean_IDSP" = mean(IDSPref) %>% 
+                round(2),
+     "SD_IDSP" = sd(IDSPref) %>% 
+                round(2),
+     # and your CONTINUOUS VARIABLE
+     "Mean_age_days" = mean(age_days) %>% 
+                round(2),
+     "SD_age_days" = sd(age_days) %>% 
+                round(2),
+     # and number of participants
+     "N" = n(),
+     # create a label so we know this row
+     # in your table is for ALL of the participants
+     # that aren't missing your predictors
+     "Group" = "All")
+
+groupDesc <- 
+    # take babyData
+    babyData %>% 
+    # group it by CAT_VARIABLE
+    group_by(gender) %>% 
+    # and create columns for the Mean and SD
+    # of IDSPref by that grouping
+    summarise("Mean_IDSP" = mean(IDSPref) %>% 
+                round(2),
+              "SD_IDSP" = sd(IDSPref) %>% 
+                round(2),
+
+              # and of CONT_VARIABLE by that grouping
+              "Mean_age_days" = mean(age_days) %>% 
+                round(2),
+              "SD_age_days" = sd(age_days) %>% 
+                round(2),
+              
+              # n per group
+              "N" = n(),
+              # group name
+              "Group" = "Child Gender")
+
+##### Descriptive Table #####
+
+print("Descriptive Table")
+
+(allDescJoin <- 
+    rbind.fill(allDesc, groupDesc))
+
+##### ANOVA #####
+
+model <-
+  lm(babyData$IDSPref ~ babyData$age_days * babyData$gender)
+modelanova <- Anova(model, type = 3) %>% 
+  round(3)
+modeleta <- etasq(model) %>% 
+  round(2)
+
+print("ANOVA Table")
+(anova_table <-
+  merge(x = modelanova, 
+        y = modeleta, 
+        by = 'row.names',
+        # keep original order
+        # don't sort alphabetically
+        sort = FALSE))
+
+##### Figure #####
+
+# same overall format as your correlation plots
+(paper2Plot <- 
+  ggplot(data = babyData, 
+         aes(x = age_days, y = IDSPref, 
+             # "color" means outline, while "fill" means center
+             color = gender)) +
+  # using geom_smooth AND geom_point
+  geom_point(
+    # default point size is too large
+    size = 1) +
+  geom_smooth(
+    # method = linear model (regression)
+    method = "lm",
+    # don't show standard error margins
+    se = FALSE,
+    # default line size is too small
+    size = 1.3) +
+  # Change your labels and title accordingly
+  xlab("Child Age in Days") +
+  ylab("IDS Preference") +
+  ggtitle("YOUR PLOT TITLE") +
+  guides(color = 
+           guide_legend(
+             # SHORT title for CAT_VARIABLE!
+             title = "Child Gender")))
+```
+
+
+## Child Gender & Number of Siblings
+
+```{r Child Gender & Number of Siblings, include=TRUE, echo = FALSE}
+
+babyData <- babyDataFull
+
+babyData <- 
+  babyData[!is.na(babyData$gender) & 
+             !is.na(babyData$nSibs), ]
+
+allDesc <- 
+   # take babyData
+   babyData %>% 
+   # and create columns for the Mean and SD
+   summarise(
+     # of IDSPref
+     "Mean_IDSP" = mean(IDSPref) %>% 
+                round(2),
+     "SD_IDSP" = sd(IDSPref) %>% 
+                round(2),
+     # and your CONTINUOUS VARIABLE
+     "Mean_nSibs" = mean(nSibs) %>% 
+                round(2),
+     "SD_nSibs" = sd(nSibs) %>% 
+                round(2),
+     # and number of participants
+     "N" = n(),
+     # create a label so we know this row
+     # in your table is for ALL of the participants
+     # that aren't missing your predictors
+     "Group" = "All")
+
+groupDesc <- 
+    # take babyData
+    babyData %>% 
+    # group it by CAT_VARIABLE
+    group_by(gender) %>% 
+    # and create columns for the Mean and SD
+    # of IDSPref by that grouping
+    summarise("Mean_IDSP" = mean(IDSPref) %>% 
+                round(2),
+              "SD_IDSP" = sd(IDSPref) %>% 
+                round(2),
+
+              # and of CONT_VARIABLE by that grouping
+              "Mean_nSibs" = mean(nSibs) %>% 
+                round(2),
+              "SD_nSibs" = sd(nSibs) %>% 
+                round(2),
+              
+              # n per group
+              "N" = n(),
+              # group name
+              "Group" = "Child Gender")
+
+##### Descriptive Table #####
+
+print("Descriptive Table")
+
+(allDescJoin <- 
+    rbind.fill(allDesc, groupDesc))
+
+##### ANOVA #####
+
+model <-
+  lm(babyData$IDSPref ~ babyData$nSibs * babyData$gender)
+modelanova <- Anova(model, type = 3) %>% 
+  round(3)
+modeleta <- etasq(model) %>% 
+  round(2)
+
+print("ANOVA Table")
+(anova_table <-
+  merge(x = modelanova, 
+        y = modeleta, 
+        by = 'row.names',
+        # keep original order
+        # don't sort alphabetically
+        sort = FALSE))
+
+##### Figure #####
+
+# same overall format as your correlation plots
+(paper2Plot <- 
+  ggplot(data = babyData, 
+         aes(x = nSibs, y = IDSPref, 
+             # "color" means outline, while "fill" means center
+             color = gender)) +
+  # using geom_smooth AND geom_point
+  geom_point(
+    # default point size is too large
+    size = 1) +
+  geom_smooth(
+    # method = linear model (regression)
+    method = "lm",
+    # don't show standard error margins
+    se = FALSE,
+    # default line size is too small
+    size = 1.3) +
+  # Change your labels and title accordingly
+  xlab("Number of Siblings") +
+  ylab("IDS Preference") +
+  ggtitle("YOUR PLOT TITLE") +
+  guides(color = 
+           guide_legend(
+             # SHORT title for CAT_VARIABLE!
+             title = "Child Gender")))
+```
+
+## Child Gender & Years of Parent Education
+
+```{r Child Gender & Parent Education, include=TRUE, echo = FALSE}
+
+babyData <- babyDataFull
+
+babyData <- 
+  babyData[!is.na(babyData$gender) & 
+             !is.na(babyData$yearsEd), ]
+
+allDesc <- 
+   # take babyData
+   babyData %>% 
+   # and create columns for the Mean and SD
+   summarise(
+     # of IDSPref
+     "Mean_IDSP" = mean(IDSPref) %>% 
+                round(2),
+     "SD_IDSP" = sd(IDSPref) %>% 
+                round(2),
+     # and your CONTINUOUS VARIABLE
+     "Mean_yearsEd" = mean(yearsEd) %>% 
+                round(2),
+     "SD_yearsEd" = sd(yearsEd) %>% 
+                round(2),
+     # and number of participants
+     "N" = n(),
+     # create a label so we know this row
+     # in your table is for ALL of the participants
+     # that aren't missing your predictors
+     "Group" = "All")
+
+groupDesc <- 
+    # take babyData
+    babyData %>% 
+    # group it by CAT_VARIABLE
+    group_by(gender) %>% 
+    # and create columns for the Mean and SD
+    # of IDSPref by that grouping
+    summarise("Mean_IDSP" = mean(IDSPref) %>% 
+                round(2),
+              "SD_IDSP" = sd(IDSPref) %>% 
+                round(2),
+
+              # and of CONT_VARIABLE by that grouping
+              "Mean_yearsEd" = mean(yearsEd) %>% 
+                round(2),
+              "SD_yearsEd" = sd(yearsEd) %>% 
+                round(2),
+              
+              # n per group
+              "N" = n(),
+              # group name
+              "Group" = "Child Gender")
+
+##### Descriptive Table #####
+
+print("Descriptive Table")
+
+(allDescJoin <- 
+    rbind.fill(allDesc, groupDesc))
+
+##### ANOVA #####
+
+model <-
+  lm(babyData$IDSPref ~ babyData$yearsEd * babyData$gender)
+modelanova <- Anova(model, type = 3) %>% 
+  round(3)
+modeleta <- etasq(model) %>% 
+  round(2)
+
+print("ANOVA Table")
+(anova_table <-
+  merge(x = modelanova, 
+        y = modeleta, 
+        by = 'row.names',
+        # keep original order
+        # don't sort alphabetically
+        sort = FALSE))
+
+##### Figure #####
+
+# same overall format as your correlation plots
+(paper2Plot <- 
+  ggplot(data = babyData, 
+         aes(x = yearsEd, y = IDSPref, 
+             # "color" means outline, while "fill" means center
+             color = gender)) +
+  # using geom_smooth AND geom_point
+  geom_point(
+    # default point size is too large
+    size = 1) +
+  geom_smooth(
+    # method = linear model (regression)
+    method = "lm",
+    # don't show standard error margins
+    se = FALSE,
+    # default line size is too small
+    size = 1.3) +
+  # Change your labels and title accordingly
+  xlab("Years of Parental Education") +
+  ylab("IDS Preference") +
+  ggtitle("YOUR PLOT TITLE") +
+  guides(color = 
+           guide_legend(
+             # SHORT title for CAT_VARIABLE!
+             title = "Child Gender")))
+```
+
+
+## Caregiver Gender & Child Age
+
+```{r Caregiver Gender & Child Age, include=TRUE, echo = FALSE}
+
+babyData <- babyDataFull
+
+babyData <- 
+  babyData[!is.na(babyData$careGender) & 
+             !is.na(babyData$age_days), ]
+
+allDesc <- 
+   # take babyData
+   babyData %>% 
+   # and create columns for the Mean and SD
+   summarise(
+     # of IDSPref
+     "Mean_IDSP" = mean(IDSPref) %>% 
+                round(2),
+     "SD_IDSP" = sd(IDSPref) %>% 
+                round(2),
+     # and your CONTINUOUS VARIABLE
+     "Mean_age_days" = mean(age_days) %>% 
+                round(2),
+     "SD_age_days" = sd(age_days) %>% 
+                round(2),
+     # and number of participants
+     "N" = n(),
+     # create a label so we know this row
+     # in your table is for ALL of the participants
+     # that aren't missing your predictors
+     "Group" = "All")
+
+groupDesc <- 
+    # take babyData
+    babyData %>% 
+    # group it by CAT_VARIABLE
+    group_by(careGender) %>% 
+    # and create columns for the Mean and SD
+    # of IDSPref by that grouping
+    summarise("Mean_IDSP" = mean(IDSPref) %>% 
+                round(2),
+              "SD_IDSP" = sd(IDSPref) %>% 
+                round(2),
+
+              # and of CONT_VARIABLE by that grouping
+              "Mean_age_days" = mean(age_days) %>% 
+                round(2),
+              "SD_age_days" = sd(age_days) %>% 
+                round(2),
+              
+              # n per group
+              "N" = n(),
+              # group name
+              "Group" = "Caregiver Gender")
+
+##### Descriptive Table #####
+
+print("Descriptive Table")
+
+(allDescJoin <- 
+    rbind.fill(allDesc, groupDesc))
+
+##### ANOVA #####
+
+model <-
+  lm(babyData$IDSPref ~ babyData$age_days * babyData$careGender)
+modelanova <- Anova(model, type = 3) %>% 
+  round(3)
+modeleta <- etasq(model) %>% 
+  round(2)
+
+print("ANOVA Table")
+(anova_table <-
+  merge(x = modelanova, 
+        y = modeleta, 
+        by = 'row.names',
+        # keep original order
+        # don't sort alphabetically
+        sort = FALSE))
+
+##### Figure #####
+
+# same overall format as your correlation plots
+(paper2Plot <- 
+  ggplot(data = babyData, 
+         aes(x = age_days, y = IDSPref, 
+             # "color" means outline, while "fill" means center
+             color = careGender)) +
+  # using geom_smooth AND geom_point
+  geom_point(
+    # default point size is too large
+    size = 1) +
+  geom_smooth(
+    # method = linear model (regression)
+    method = "lm",
+    # don't show standard error margins
+    se = FALSE,
+    # default line size is too small
+    size = 1.3) +
+  # Change your labels and title accordingly
+  xlab("Child Age in Days") +
+  ylab("IDS Preference") +
+  ggtitle("YOUR PLOT TITLE") +
+  guides(color = 
+           guide_legend(
+             # SHORT title for CAT_VARIABLE!
+             title = "Caregiver Gender")))
+```
+
+## Caregiver Gender & Number of Siblings
+
+```{r Caregiver Gender & Number of Siblings, include=TRUE, echo = FALSE}
+
+babyData <- babyDataFull
+
+babyData <- 
+  babyData[!is.na(babyData$careGender) & 
+             !is.na(babyData$nSibs), ]
+
+allDesc <- 
+   # take babyData
+   babyData %>% 
+   # and create columns for the Mean and SD
+   summarise(
+     # of IDSPref
+     "Mean_IDSP" = mean(IDSPref) %>% 
+                round(2),
+     "SD_IDSP" = sd(IDSPref) %>% 
+                round(2),
+     # and your CONTINUOUS VARIABLE
+     "Mean_nSibs" = mean(nSibs) %>% 
+                round(2),
+     "SD_nSibs" = sd(nSibs) %>% 
+                round(2),
+     # and number of participants
+     "N" = n(),
+     # create a label so we know this row
+     # in your table is for ALL of the participants
+     # that aren't missing your predictors
+     "Group" = "All")
+
+groupDesc <- 
+    # take babyData
+    babyData %>% 
+    # group it by CAT_VARIABLE
+    group_by(careGender) %>% 
+    # and create columns for the Mean and SD
+    # of IDSPref by that grouping
+    summarise("Mean_IDSP" = mean(IDSPref) %>% 
+                round(2),
+              "SD_IDSP" = sd(IDSPref) %>% 
+                round(2),
+
+              # and of CONT_VARIABLE by that grouping
+              "Mean_nSibs" = mean(nSibs) %>% 
+                round(2),
+              "SD_nSibs" = sd(nSibs) %>% 
+                round(2),
+              
+              # n per group
+              "N" = n(),
+              # group name
+              "Group" = "Caregiver Gender")
+
+##### Descriptive Table #####
+
+print("Descriptive Table")
+
+(allDescJoin <- 
+    rbind.fill(allDesc, groupDesc))
+
+##### ANOVA #####
+
+model <-
+  lm(babyData$IDSPref ~ babyData$nSibs * babyData$careGender)
+modelanova <- Anova(model, type = 3) %>% 
+  round(3)
+modeleta <- etasq(model) %>% 
+  round(2)
+
+print("ANOVA Table")
+(anova_table <-
+  merge(x = modelanova, 
+        y = modeleta, 
+        by = 'row.names',
+        # keep original order
+        # don't sort alphabetically
+        sort = FALSE))
+
+##### Figure #####
+
+# same overall format as your correlation plots
+(paper2Plot <- 
+  ggplot(data = babyData, 
+         aes(x = nSibs, y = IDSPref, 
+             # "color" means outline, while "fill" means center
+             color = careGender)) +
+  # using geom_smooth AND geom_point
+  geom_point(
+    # default point size is too large
+    size = 1) +
+  geom_smooth(
+    # method = linear model (regression)
+    method = "lm",
+    # don't show standard error margins
+    se = FALSE,
+    # default line size is too small
+    size = 1.3) +
+  # Change your labels and title accordingly
+  xlab("Number of Siblings") +
+  ylab("IDS Preference") +
+  ggtitle("YOUR PLOT TITLE") +
+  guides(color = 
+           guide_legend(
+             # SHORT title for CAT_VARIABLE!
+             title = "Caregiver Gender")))
+```
+
+## Caregiver Gender & Years of Education
+
+```{r Caregiver Gender & Years of Education, include=TRUE, echo = FALSE}
+
+babyData <- babyDataFull
+
+babyData <- 
+  babyData[!is.na(babyData$careGender) & 
+             !is.na(babyData$yearsEd), ]
+
+allDesc <- 
+   # take babyData
+   babyData %>% 
+   # and create columns for the Mean and SD
+   summarise(
+     # of IDSPref
+     "Mean_IDSP" = mean(IDSPref) %>% 
+                round(2),
+     "SD_IDSP" = sd(IDSPref) %>% 
+                round(2),
+     # and your CONTINUOUS VARIABLE
+     "Mean_yearsEd" = mean(yearsEd) %>% 
+                round(2),
+     "SD_yearsEd" = sd(yearsEd) %>% 
+                round(2),
+     # and number of participants
+     "N" = n(),
+     # create a label so we know this row
+     # in your table is for ALL of the participants
+     # that aren't missing your predictors
+     "Group" = "All")
+
+groupDesc <- 
+    # take babyData
+    babyData %>% 
+    # group it by CAT_VARIABLE
+    group_by(careGender) %>% 
+    # and create columns for the Mean and SD
+    # of IDSPref by that grouping
+    summarise("Mean_IDSP" = mean(IDSPref) %>% 
+                round(2),
+              "SD_IDSP" = sd(IDSPref) %>% 
+                round(2),
+
+              # and of CONT_VARIABLE by that grouping
+              "Mean_yearsEd" = mean(yearsEd) %>% 
+                round(2),
+              "SD_yearsEd" = sd(yearsEd) %>% 
+                round(2),
+              
+              # n per group
+              "N" = n(),
+              # group name
+              "Group" = "Caregiver Gender")
+
+##### Descriptive Table #####
+
+print("Descriptive Table")
+
+(allDescJoin <- 
+    rbind.fill(allDesc, groupDesc))
+
+##### ANOVA #####
+
+model <-
+  lm(babyData$IDSPref ~ babyData$yearsEd * babyData$careGender)
+modelanova <- Anova(model, type = 3) %>% 
+  round(3)
+modeleta <- etasq(model) %>% 
+  round(2)
+
+print("ANOVA Table")
+(anova_table <-
+  merge(x = modelanova, 
+        y = modeleta, 
+        by = 'row.names',
+        # keep original order
+        # don't sort alphabetically
+        sort = FALSE))
+
+##### Figure #####
+
+# same overall format as your correlation plots
+(paper2Plot <- 
+  ggplot(data = babyData, 
+         aes(x = yearsEd, y = IDSPref, 
+             # "color" means outline, while "fill" means center
+             color = careGender)) +
+  # using geom_smooth AND geom_point
+  geom_point(
+    # default point size is too large
+    size = 1) +
+  geom_smooth(
+    # method = linear model (regression)
+    method = "lm",
+    # don't show standard error margins
+    se = FALSE,
+    # default line size is too small
+    size = 1.3) +
+  # Change your labels and title accordingly
+  xlab("Years of Caregiver Education") +
+  ylab("IDS Preference") +
+  ggtitle("YOUR PLOT TITLE") +
+  guides(color = 
+           guide_legend(
+             # SHORT title for CAT_VARIABLE!
+             title = "Caregiver Gender")))
+```
+
+## More than 1 Lang & Child Age in Days
+
+```{r More than 1 Lang & Child Age in Days, include=TRUE, echo = FALSE}
+
+babyData <- babyDataFull
+
+babyData <- 
+  babyData[!is.na(babyData$moreLang) & 
+             !is.na(babyData$age_days), ]
+
+allDesc <- 
+   # take babyData
+   babyData %>% 
+   # and create columns for the Mean and SD
+   summarise(
+     # of IDSPref
+     "Mean_IDSP" = mean(IDSPref) %>% 
+                round(2),
+     "SD_IDSP" = sd(IDSPref) %>% 
+                round(2),
+     # and your CONTINUOUS VARIABLE
+     "Mean_age_days" = mean(age_days) %>% 
+                round(2),
+     "SD_age_days" = sd(age_days) %>% 
+                round(2),
+     # and number of participants
+     "N" = n(),
+     # create a label so we know this row
+     # in your table is for ALL of the participants
+     # that aren't missing your predictors
+     "Group" = "All")
+
+groupDesc <- 
+    # take babyData
+    babyData %>% 
+    # group it by CAT_VARIABLE
+    group_by(moreLang) %>% 
+    # and create columns for the Mean and SD
+    # of IDSPref by that grouping
+    summarise("Mean_IDSP" = mean(IDSPref) %>% 
+                round(2),
+              "SD_IDSP" = sd(IDSPref) %>% 
+                round(2),
+
+              # and of CONT_VARIABLE by that grouping
+              "Mean_age_days" = mean(age_days) %>% 
+                round(2),
+              "SD_age_days" = sd(age_days) %>% 
+                round(2),
+              
+              # n per group
+              "N" = n(),
+              # group name
+              "Group" = "More than 1 Lang")
+
+##### Descriptive Table #####
+
+print("Descriptive Table")
+
+(allDescJoin <- 
+    rbind.fill(allDesc, groupDesc))
+
+##### ANOVA #####
+
+model <-
+  lm(babyData$IDSPref ~ babyData$age_days * babyData$moreLang)
+modelanova <- Anova(model, type = 3) %>% 
+  round(3)
+modeleta <- etasq(model) %>% 
+  round(2)
+
+print("ANOVA Table")
+(anova_table <-
+  merge(x = modelanova, 
+        y = modeleta, 
+        by = 'row.names',
+        # keep original order
+        # don't sort alphabetically
+        sort = FALSE))
+
+##### Figure #####
+
+# same overall format as your correlation plots
+(paper2Plot <- 
+  ggplot(data = babyData, 
+         aes(x = age_days, y = IDSPref, 
+             # "color" means outline, while "fill" means center
+             color = moreLang)) +
+  # using geom_smooth AND geom_point
+  geom_point(
+    # default point size is too large
+    size = 1) +
+  geom_smooth(
+    # method = linear model (regression)
+    method = "lm",
+    # don't show standard error margins
+    se = FALSE,
+    # default line size is too small
+    size = 1.3) +
+  # Change your labels and title accordingly
+  xlab("Child Age in Days") +
+  ylab("IDS Preference") +
+  ggtitle("YOUR PLOT TITLE") +
+  guides(color = 
+           guide_legend(
+             # SHORT title for CAT_VARIABLE!
+             title = "More than 1 Lang")))
+```
+
+
+## More than 1 Lang & Number of Siblings
+
+```{r More than 1 Lang & Number of Siblings, include=TRUE, echo = FALSE}
+
+babyData <- babyDataFull
+
+babyData <- 
+  babyData[!is.na(babyData$moreLang) & 
+             !is.na(babyData$nSibs), ]
+
+allDesc <- 
+   # take babyData
+   babyData %>% 
+   # and create columns for the Mean and SD
+   summarise(
+     # of IDSPref
+     "Mean_IDSP" = mean(IDSPref) %>% 
+                round(2),
+     "SD_IDSP" = sd(IDSPref) %>% 
+                round(2),
+     # and your CONTINUOUS VARIABLE
+     "Mean_nSibs" = mean(nSibs) %>% 
+                round(2),
+     "SD_nSibs" = sd(nSibs) %>% 
+                round(2),
+     # and number of participants
+     "N" = n(),
+     # create a label so we know this row
+     # in your table is for ALL of the participants
+     # that aren't missing your predictors
+     "Group" = "All")
+
+groupDesc <- 
+    # take babyData
+    babyData %>% 
+    # group it by CAT_VARIABLE
+    group_by(moreLang) %>% 
+    # and create columns for the Mean and SD
+    # of IDSPref by that grouping
+    summarise("Mean_IDSP" = mean(IDSPref) %>% 
+                round(2),
+              "SD_IDSP" = sd(IDSPref) %>% 
+                round(2),
+
+              # and of CONT_VARIABLE by that grouping
+              "Mean_nSibs" = mean(nSibs) %>% 
+                round(2),
+              "SD_nSibs" = sd(nSibs) %>% 
+                round(2),
+              
+              # n per group
+              "N" = n(),
+              # group name
+              "Group" = "More than 1 Lang")
+
+##### Descriptive Table #####
+
+print("Descriptive Table")
+
+(allDescJoin <- 
+    rbind.fill(allDesc, groupDesc))
+
+##### ANOVA #####
+
+model <-
+  lm(babyData$IDSPref ~ babyData$nSibs * babyData$moreLang)
+modelanova <- Anova(model, type = 3) %>% 
+  round(3)
+modeleta <- etasq(model) %>% 
+  round(2)
+
+print("ANOVA Table")
+(anova_table <-
+  merge(x = modelanova, 
+        y = modeleta, 
+        by = 'row.names',
+        # keep original order
+        # don't sort alphabetically
+        sort = FALSE))
+
+##### Figure #####
+
+# same overall format as your correlation plots
+(paper2Plot <- 
+  ggplot(data = babyData, 
+         aes(x = nSibs, y = IDSPref, 
+             # "color" means outline, while "fill" means center
+             color = moreLang)) +
+  # using geom_smooth AND geom_point
+  geom_point(
+    # default point size is too large
+    size = 1) +
+  geom_smooth(
+    # method = linear model (regression)
+    method = "lm",
+    # don't show standard error margins
+    se = FALSE,
+    # default line size is too small
+    size = 1.3) +
+  # Change your labels and title accordingly
+  xlab("Number of Siblings") +
+  ylab("IDS Preference") +
+  ggtitle("YOUR PLOT TITLE") +
+  guides(color = 
+           guide_legend(
+             # SHORT title for CAT_VARIABLE!
+             title = "More than 1 Lang")))
+```
+
+## More than 1 Lang & Years of Education
+
+```{r More than 1 Lang & Years of Education, include=TRUE, echo = FALSE}
+
+babyData <- babyDataFull
+
+babyData <- 
+  babyData[!is.na(babyData$moreLang) & 
+             !is.na(babyData$yearsEd), ]
+
+allDesc <- 
+   # take babyData
+   babyData %>% 
+   # and create columns for the Mean and SD
+   summarise(
+     # of IDSPref
+     "Mean_IDSP" = mean(IDSPref) %>% 
+                round(2),
+     "SD_IDSP" = sd(IDSPref) %>% 
+                round(2),
+     # and your CONTINUOUS VARIABLE
+     "Mean_yearsEd" = mean(yearsEd) %>% 
+                round(2),
+     "SD_yearsEd" = sd(yearsEd) %>% 
+                round(2),
+     # and number of participants
+     "N" = n(),
+     # create a label so we know this row
+     # in your table is for ALL of the participants
+     # that aren't missing your predictors
+     "Group" = "All")
+
+groupDesc <- 
+    # take babyData
+    babyData %>% 
+    # group it by CAT_VARIABLE
+    group_by(moreLang) %>% 
+    # and create columns for the Mean and SD
+    # of IDSPref by that grouping
+    summarise("Mean_IDSP" = mean(IDSPref) %>% 
+                round(2),
+              "SD_IDSP" = sd(IDSPref) %>% 
+                round(2),
+
+              # and of CONT_VARIABLE by that grouping
+              "Mean_yearsEd" = mean(yearsEd) %>% 
+                round(2),
+              "SD_yearsEd" = sd(yearsEd) %>% 
+                round(2),
+              
+              # n per group
+              "N" = n(),
+              # group name
+              "Group" = "More than 1 Lang")
+
+##### Descriptive Table #####
+
+print("Descriptive Table")
+
+(allDescJoin <- 
+    rbind.fill(allDesc, groupDesc))
+
+##### ANOVA #####
+
+model <-
+  lm(babyData$IDSPref ~ babyData$yearsEd * babyData$moreLang)
+modelanova <- Anova(model, type = 3) %>% 
+  round(3)
+modeleta <- etasq(model) %>% 
+  round(2)
+
+print("ANOVA Table")
+(anova_table <-
+  merge(x = modelanova, 
+        y = modeleta, 
+        by = 'row.names',
+        # keep original order
+        # don't sort alphabetically
+        sort = FALSE))
+
+##### Figure #####
+
+# same overall format as your correlation plots
+(paper2Plot <- 
+  ggplot(data = babyData, 
+         aes(x = yearsEd, y = IDSPref, 
+             # "color" means outline, while "fill" means center
+             color = moreLang)) +
+  # using geom_smooth AND geom_point
+  geom_point(
+    # default point size is too large
+    size = 1) +
+  geom_smooth(
+    # method = linear model (regression)
+    method = "lm",
+    # don't show standard error margins
+    se = FALSE,
+    # default line size is too small
+    size = 1.3) +
+  # Change your labels and title accordingly
+  xlab("Years of Caregiver Education") +
+  ylab("IDS Preference") +
+  ggtitle("YOUR PLOT TITLE") +
+  guides(color = 
+           guide_legend(
+             # SHORT title for CAT_VARIABLE!
+             title = "More than 1 Lang")))
+```
+
+
+# 2 CATEGORICAL PREDICTORS
+
+## Child Gender & Caregiver Gender
+
+```{r Child Gender & Caregiver Gender, include=TRUE, echo = FALSE}
+
+babyData <- babyDataFull
+
+babyData <- 
+  babyData[!is.na(babyData$careGender) & 
+             !is.na(babyData$gender), ]
+
+# Grand Mean, SD, and N for your full dataset
+
+# create an object for descriptives
+allDesc <- 
+  # take babyData
+  babyData %>% 
+    # and create columns for the Mean and SD
+    # of IDSPref
+    summarise("Mean_IDSP" = mean(IDSPref) %>% 
+                round(2),
+              "SD_IDSP" = sd(IDSPref) %>% 
+                round(2),
+              # and number of participants
+              "N" = n(),
+              # create a label so we know this row
+              # in your table is for ALL of the participants
+              # that aren't missing your predictors
+              "Group" = "All")
+
+# GROUPED DESCRIPTIVES #
+
+# These are your column/row N's, means and SDs.
+
+# Variable 1
+
+group1Desc <- 
+  # take babyData
+  babyData %>% 
+    # group it by VARIABLE1
+    group_by(gender) %>% 
+    # and create columns for the Mean and SD
+    # of IDSPref by that grouping
+    summarise("Mean_IDSP" = mean(IDSPref) %>% 
+                round(2),
+              "SD_IDSP" = sd(IDSPref) %>% 
+                round(2),
+              "N" = n(),
+              "Group" = "Child Gender")
+
+# Variable 2
+
+group2Desc <- 
+    # take babyData
+    babyData %>% 
+    # group it by VARIABLE2
+    group_by(careGender) %>% 
+    # and create columns for the Mean and SD
+    # of IDSPref by that grouping
+    summarise("Mean_IDSP" = mean(IDSPref) %>% 
+                round(2),
+              "SD_IDSP" = sd(IDSPref) %>% 
+                round(2),
+              "N" = n(),
+              "Group" = "Caregiver Gender")
+
+# Both Group Variables Together #
+
+bothGroupsDesc <- 
+   # take babyData
+   babyData %>% 
+   # group it by VARIABLE1 & VARIABLE2
+   group_by(gender, careGender) %>% 
+   # and create columns for the Mean and SD
+   # of IDSPref, by that grouping
+   summarise("Mean_IDSP" = mean(IDSPref) %>% 
+                round(2),
+             "SD_IDSP" = sd(IDSPref) %>% 
+                round(2),
+             "N" = n(),
+             "Group" = "Both")
+
+
+##### Descriptive Table #####
+
+print("Descriptive Table")
+(allDescJoin <- 
+  rbind.fill(allDesc, group1Desc, group2Desc, bothGroupsDesc))
+
+
+
+##### ANOVA #####
+
+model <-
+  lm(babyData$IDSPref ~ babyData$gender * babyData$careGender)
+modelanova <- Anova(model, type = 3) %>% 
+  round(3)
+modeleta <- etasq(model) %>% 
+  round(2)
+
+print("ANOVA Table")
+(anova_table <-
+  merge(x = modelanova, 
+        y = modeleta, 
+        by = 'row.names',
+        # keep original order
+        # don't sort alphabetically
+        sort = FALSE))
+
+##### Figure #####
+
+# same overall format as your correlation plots
+# same overall format as your correlation plots
+(paper2Plot <- 
+   ggplot(data = babyData, 
+         aes(x = gender, y = IDSPref, 
+             # "color" means outline, while "fill" means center
+             fill = careGender)) +
+    # using geom_boxplot instead of the geom_point we used for correlations
+    geom_boxplot() +
+    # Change your labels and title accordingly
+    xlab("Child Gender") +
+    ylab("IDS Preference") +
+    ggtitle("YOUR PLOT TITLE") +
+    guides(fill = 
+             guide_legend(
+               # SHORT title for variable 2!
+               title = "Caregiver Gender")))
+```
+
+## Child Gender & Multilingual
+
+```{r Child Gender & Multilingual, include=TRUE, echo = FALSE}
+
+babyData <- babyDataFull
+
+babyData <- 
+  babyData[!is.na(babyData$moreLang) & 
+             !is.na(babyData$gender), ]
+
+# Grand Mean, SD, and N for your full dataset
+
+# create an object for descriptives
+allDesc <- 
+  # take babyData
+  babyData %>% 
+    # and create columns for the Mean and SD
+    # of IDSPref
+    summarise("Mean_IDSP" = mean(IDSPref) %>% 
+                round(2),
+              "SD_IDSP" = sd(IDSPref) %>% 
+                round(2),
+              # and number of participants
+              "N" = n(),
+              # create a label so we know this row
+              # in your table is for ALL of the participants
+              # that aren't missing your predictors
+              "Group" = "All")
+
+# GROUPED DESCRIPTIVES #
+
+# These are your column/row N's, means and SDs.
+
+# Variable 1
+
+group1Desc <- 
+  # take babyData
+  babyData %>% 
+    # group it by VARIABLE1
+    group_by(gender) %>% 
+    # and create columns for the Mean and SD
+    # of IDSPref by that grouping
+    summarise("Mean_IDSP" = mean(IDSPref) %>% 
+                round(2),
+              "SD_IDSP" = sd(IDSPref) %>% 
+                round(2),
+              "N" = n(),
+              "Group" = "Child Gender")
+
+# Variable 2
+
+group2Desc <- 
+    # take babyData
+    babyData %>% 
+    # group it by VARIABLE2
+    group_by(moreLang) %>% 
+    # and create columns for the Mean and SD
+    # of IDSPref by that grouping
+    summarise("Mean_IDSP" = mean(IDSPref) %>% 
+                round(2),
+              "SD_IDSP" = sd(IDSPref) %>% 
+                round(2),
+              "N" = n(),
+              "Group" = "Multilingual")
+
+# Both Group Variables Together #
+
+bothGroupsDesc <- 
+   # take babyData
+   babyData %>% 
+   # group it by VARIABLE1 & VARIABLE2
+   group_by(gender, moreLang) %>% 
+   # and create columns for the Mean and SD
+   # of IDSPref, by that grouping
+   summarise("Mean_IDSP" = mean(IDSPref) %>% 
+                round(2),
+             "SD_IDSP" = sd(IDSPref) %>% 
+                round(2),
+             "N" = n(),
+             "Group" = "Both")
+
+
+##### Descriptive Table #####
+
+print("Descriptive Table")
+(allDescJoin <- 
+  rbind.fill(allDesc, group1Desc, group2Desc, bothGroupsDesc))
+
+
+
+##### ANOVA #####
+
+model <-
+  lm(babyData$IDSPref ~ babyData$gender * babyData$moreLang)
+modelanova <- Anova(model, type = 3) %>% 
+  round(3)
+modeleta <- etasq(model) %>% 
+  round(2)
+
+print("ANOVA Table")
+(anova_table <-
+  merge(x = modelanova, 
+        y = modeleta, 
+        by = 'row.names',
+        # keep original order
+        # don't sort alphabetically
+        sort = FALSE))
+
+##### Figure #####
+
+# same overall format as your correlation plots
+# same overall format as your correlation plots
+(paper2Plot <- 
+   ggplot(data = babyData, 
+         aes(x = gender, y = IDSPref, 
+             # "color" means outline, while "fill" means center
+             fill = moreLang)) +
+    # using geom_boxplot instead of the geom_point we used for correlations
+    geom_boxplot() +
+    # Change your labels and title accordingly
+    xlab("Child Gender") +
+    ylab("IDS Preference") +
+    ggtitle("YOUR PLOT TITLE") +
+    guides(fill = 
+             guide_legend(
+               # SHORT title for variable 2!
+               title = "Multilingual")))
+```
+
+
+## Caregiver Gender & Multilingual
+
+```{r Caregiver Gender & Multilingual, include=TRUE, echo = FALSE}
+
+babyData <- babyDataFull
+
+babyData <- 
+  babyData[!is.na(babyData$moreLang) & 
+             !is.na(babyData$careGender), ]
+
+# Grand Mean, SD, and N for your full dataset
+
+# create an object for descriptives
+allDesc <- 
+  # take babyData
+  babyData %>% 
+    # and create columns for the Mean and SD
+    # of IDSPref
+    summarise("Mean_IDSP" = mean(IDSPref) %>% 
+                round(2),
+              "SD_IDSP" = sd(IDSPref) %>% 
+                round(2),
+              # and number of participants
+              "N" = n(),
+              # create a label so we know this row
+              # in your table is for ALL of the participants
+              # that aren't missing your predictors
+              "Group" = "All")
+
+# GROUPED DESCRIPTIVES #
+
+# These are your column/row N's, means and SDs.
+
+# Variable 1
+
+group1Desc <- 
+  # take babyData
+  babyData %>% 
+    # group it by VARIABLE1
+    group_by(careGender) %>% 
+    # and create columns for the Mean and SD
+    # of IDSPref by that grouping
+    summarise("Mean_IDSP" = mean(IDSPref) %>% 
+                round(2),
+              "SD_IDSP" = sd(IDSPref) %>% 
+                round(2),
+              "N" = n(),
+              "Group" = "Caregiver Gender")
+
+# Variable 2
+
+group2Desc <- 
+    # take babyData
+    babyData %>% 
+    # group it by VARIABLE2
+    group_by(moreLang) %>% 
+    # and create columns for the Mean and SD
+    # of IDSPref by that grouping
+    summarise("Mean_IDSP" = mean(IDSPref) %>% 
+                round(2),
+              "SD_IDSP" = sd(IDSPref) %>% 
+                round(2),
+              "N" = n(),
+              "Group" = "Multilingual")
+
+# Both Group Variables Together #
+
+bothGroupsDesc <- 
+   # take babyData
+   babyData %>% 
+   # group it by VARIABLE1 & VARIABLE2
+   group_by(careGender, moreLang) %>% 
+   # and create columns for the Mean and SD
+   # of IDSPref, by that grouping
+   summarise("Mean_IDSP" = mean(IDSPref) %>% 
+                round(2),
+             "SD_IDSP" = sd(IDSPref) %>% 
+                round(2),
+             "N" = n(),
+             "Group" = "Both")
+
+
+##### Descriptive Table #####
+
+print("Descriptive Table")
+(allDescJoin <- 
+  rbind.fill(allDesc, group1Desc, group2Desc, bothGroupsDesc))
+
+
+
+##### ANOVA #####
+
+model <-
+  lm(babyData$IDSPref ~ babyData$careGender * babyData$moreLang)
+modelanova <- Anova(model, type = 3) %>% 
+  round(3)
+modeleta <- etasq(model) %>% 
+  round(2)
+
+print("ANOVA Table")
+(anova_table <-
+  merge(x = modelanova, 
+        y = modeleta, 
+        by = 'row.names',
+        # keep original order
+        # don't sort alphabetically
+        sort = FALSE))
+
+##### Figure #####
+
+# same overall format as your correlation plots
+# same overall format as your correlation plots
+(paper2Plot <- 
+   ggplot(data = babyData, 
+         aes(x = careGender, y = IDSPref, 
+             # "color" means outline, while "fill" means center
+             fill = moreLang)) +
+    # using geom_boxplot instead of the geom_point we used for correlations
+    geom_boxplot() +
+    # Change your labels and title accordingly
+    xlab("Caregiver Gender") +
+    ylab("IDS Preference") +
+    ggtitle("YOUR PLOT TITLE") +
+    guides(fill = 
+             guide_legend(
+               # SHORT title for variable 2!
+               title = "Multilingual")))
+```
